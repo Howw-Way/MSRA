@@ -12,7 +12,6 @@ This is my note for learning torch, based on the official website.
 例如Dataset[0]就是存的数据，而Dataset[1]则是数据对应的label，而len(Dataset)，则是其中储存的数据/label的条数
 
 **DataLoader**:在`Dataset`周围包装一个可迭代对象，以便方便地访问样本（相当于能方便的访问多个dataset）。将dataset包裹后，可以用for循环去遍历
-(其超参数较多，例如dataset, batch_size,以及num_workers可以有效在大数据时加速，进行预缓存，遇到了需求再对应学习)
 
 ### 1.1 获取torch现成的data
 
@@ -72,8 +71,8 @@ dataset中的数据是通过tuple将数据和标签组织起来的（推测好�
 ```python
 class FigureDataset(Dataset):
     def __init__(self):
-        self.Data=torch.tensor([[1,1],[2,2],[3,3]])
-        self.Label=torch.tensor([9,8,7])
+        self.Data=torch.tensor([[1,1],[2,2],[3,3],[4,4]])
+        self.Label=torch.tensor([9,8,7,6])
     def __getitem__(self, index):
         image=self.Data[index]
         label=self.Label[index]
@@ -143,7 +142,50 @@ ankleboot999.jpg, 9
 
 ### 1.3 DataLoader
 
+如上所示，通过定义的Datase，获取了单个的tuple输出，包含了数据和标签，而使用DataLoader则可以实现批处理抽取。
 
+具体超参数可查阅：[URL](https://pytorch.org/docs/stable/data.html?highlight=dataloader#torch.utils.data.DataLoader)
+
+常用重要超参数：
+`dataset`：上节介绍
+`batch_size`
+`shuffle`
+`num_workers`:用于读取数据的进程数（大数据时需要，可以有效在大数据时加速，进行预缓存）
+
+#### 1.3.1 个人case
+
+```python
+loader=DataLoader(FDataset,batch_size=2)
+#这里的enumerate() 函数用于将一个可遍历的数据对象,组合为一个索引序列,同时列出数据和数据下标，可以理解为给()内的可遍历数据对象多加了一个i
+for i,dataset in enumerate(loader):
+    data,label=dataset
+    print("i:",i)
+    print("dataset:",dataset)
+    print("Data:",data)
+    print("Label:",label)
+```
+>Out: 
+i: 0
+dataset: [tensor(\[[1, 1],[2, 2]]), tensor([9, 8])]
+Data: tensor(\[[1, 1], [2, 2]])
+Label: tensor([9, 8])
+i: 1
+dataset: [tensor(\[[3, 3],[4, 4]]), tensor([7, 6])]
+Data: tensor(\[[3, 3],[4, 4]])
+Label: tensor([7, 6])
+
+显然，DataLoader将Dataset中的数据，进行了批量(根据batch_size)抽取，而形成的loader是一个迭代器，可以通过for循环获得其中的数据。
+
+也可以直接用for循环输出，
+
+```python
+for a in loader:
+    print(a)
+```
+
+>Out:
+[tensor(\[[1, 1],[2, 2]]), tensor([9, 8])]
+[tensor(\[[3, 3],[4, 4]]), tensor([7, 6])]
 
 ## 2. Model defination
 
