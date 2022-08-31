@@ -2,7 +2,194 @@
 <!-- Data: 22.8.30 -->
 # Torch 101: my first lesson to torch
 
-This is my note for learning torch, based on the official website. 
+This is my note for learning torch, based on the official website, especially this one [URL](https://pytorch.org/tutorials/beginner/basics/intro.html) 
+
+## 0. Tensor
+
+### 0.1 基本介绍
+
+1. Reference: 
+Introduction: [URL](https://pytorch.org/tutorials/beginner/basics/tensorqs_tutorial.html)
+API: [URL](https://pytorch.org/docs/stable/torch.html)
+
+2. tensor就是张量，是pytorch用来组织数据的数据格式，好处在于其能够用在GPU上进行加速，能用于自动微分。
+同时tensor使用方式与numpy非常像，甚至会和numpy共享底层内存，即从numpy到tensor不需要复制数据。
+
+3. Torch对于二维矩阵常用的写法是:[Channel_out(即输出的维度),Channel_in(进入的维度)]
+
+### 0.2 常用函数与操作
+
+#### 0.2.1 常用的函数：
+`torch.from_numpy`,`torch.ones`,`torch.rand`,`torch.device`
+
+#### 0.2.2 GPU运算
+torch默认是在CPU上进行运算，通过`tensor.to()`进行迁移
+```python
+# Get cpu or gpu device for training.
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using {device} device")
+```
+
+#### 0.2.2 重排（转置见下方）(reshape, squeeze,unsqueeze)
+
+1. reshape()
+改为指定维度，注意要对得上数据大小
+
+2. squeeze()
+将维度为1的维度删除
+```python
+a=torch.ones(1,3,3,1)
+a.squeeze().shape#[3,3]
+```
+
+3. unsqueeze(dim)
+在指定位置添加一个1维
+```python
+a=torch.ones(2,3,3)
+b.unsqueeze(3).shape#[2,3,3,1]
+```
+#### 0.2.3 扩张与拼接
+
+1. repeat
+给tensor对应位置的维度重复对应的次数
+```python
+a=torch.ones(2,3)
+a[1:,]+=1#tensor([[1., 1., 1.],[2., 2., 2.]])
+a.repeat(3,2)
+```
+>out:tensor
+(\[[1., 1., 1., 1., 1., 1.],
+        [2., 2., 2., 2., 2., 2.],
+        [1., 1., 1., 1., 1., 1.],
+        [2., 2., 2., 2., 2., 2.],
+        [1., 1., 1., 1., 1., 1.],
+        [2., 2., 2., 2., 2., 2.]])
+
+即在a(0)重复了2次,a(1)重复了3次
+
+2. cat
+对两个tensor按指定维度进行拼接，注意其输入格式`torch.cat((tensor1, tensor2),dim)`
+注意，维度大小不超过两个tensor的维度最大值，且两个tensor要求相同维度
+```python
+a=torch.ones(2,3)
+a[1:,]-=1
+# tensor([[1., 1., 1.], [0., 0., 0.]])
+b=torch.ones(2,3)+1
+#tensor([[2., 2., 2.], [2., 2., 2.]])
+```
+
+```python
+
+torch.cat((a,b),0)
+#tensor([[1., 1., 1.],
+ #       [0., 0., 0.],
+  #      [2., 2., 2.],
+   #     [2., 2., 2.]])
+# torch.Size([4, 3])
+
+torch.cat((a,b),1)
+# tensor([[1., 1., 1., 2., 2., 2.],
+        # [0., 0., 0., 2., 2., 2.]])
+# torch.Size([2, 6])
+
+```
+
+3. stack
+与cat类似，只是操作后会增加维度1
+
+```python
+a=torch.ones(2,3)
+a[1:,]-=1
+# tensor([[1., 1., 1.], [0., 0., 0.]])
+b=torch.ones(2,3)+1
+#tensor([[2., 2., 2.], [2., 2., 2.]])
+```
+
+```python
+torch.stack((a,b),0)
+# tensor([[[1., 1., 1.],
+#          [0., 0., 0.]],
+#         [[2., 2., 2.],
+#          [2., 2., 2.]]])
+# torch.Size([2, 2, 3])
+
+torch.stack((a,b),1)
+# tensor([[[1., 1., 1.],
+#          [2., 2., 2.]],
+#         [[0., 0., 0.],
+#          [2., 2., 2.]]])
+# torch.Size([2, 2, 3])
+```
+
+### 0.3 计算
+
+#### 0.3.1 四则运算
+```python
+import torch
+from torch import tensor
+a=torch.ones(2,2)
+b=torch.ones(2,2)+1
+print(a+b)#the same with a.add(b)
+print(a-b)#the same with a.sub(b)
+print(a*b)#the same with a.mul(b)
+print(a/b)#the same with a.div(b)
+```
+>Out: tensor(\[[3., 3.],[3., 3.]])
+>Out: tensor(\[[-1., -1.],[-1., -1.]])
+>Out: tensor(\[[2., 2.],[2., 2.]])
+>Out: tensor(\[[0.5, 0.5],[0.5, 0.5]])
+
+四则运算与numpy类似，也支持广播机制
+
+#### 0.3.2 矩阵乘法
+1. 二维矩阵
+`matmlt`与`@`
+```python
+print(torch.matmul(a,b))
+print(a@b)
+```
+>Out: tensor(\[[4., 4.], [4., 4.]])
+
+2. 高维矩阵
+保持前两维不变，进行后两维的运算
+```python
+a = torch.rand(4,3,28,64)
+b = torch.rand(4,3,64,32)
+torch.matmul(a,b).shape
+```
+>Out: [4,3,28,32]
+
+#### 0.3.3 矩阵转置
+
+1. 二维矩阵
+`tensor.t()`
+该方法只支持2维及2维以下转置
+```python
+a=torch.ones(2,3)
+a.t()#shape:(3,2)
+```
+
+2. 高维矩阵
+`tensor.transpose(dim1.dim2)`(只支持对两个维度进行转置)
+```python
+a = torch.rand(4,3,28,64)
+a.transpose(2,0).shape#[28, 3, 4, 64]
+#也可以调取torch的方法
+torch.transpose(a,2,0).shape#[28, 3, 4, 64]
+#两个方法完全相同
+torch.equal(torch.transpose(a,2,0),a.transpose(2,0))
+```
+
+`tensor.permute()`支持对所有维度进行转置，但是要输入每个维度对应的转置后的顺序，且不支持torch.permute()
+```python
+a = torch.rand(4,3,28,64)
+a.permute(0,1,3,2).shape#[4, 3, 64, 28]
+torch.permute(a,0,1,3,2)#permute() takes 2 positional arguments but 5 were given
+```
+
+3. 总结：
+对于二维数组，直接使用`tensor.t()`，高维数组只需要对其中两个维度转置时，使用`tensor.transpose()`，高维数组需要对多个维度进行转置，使用`tensor.permute()`
+
 
 ## 1. DataLoader
 
