@@ -376,7 +376,13 @@ for a in loader:
 
 ## 2. Model defination
 
+具体超参数可查[URL](https://pytorch.org/docs/stable/nn.html)
+
 在pytorch中，每个使用的NN都是用户自定义的子类(继承于父类`torch .nn`中的模块`nn.Module`)，而用户自定义的子类本身已是一个模块，需要有其他层等组成。
+
+在用户自定义的Model类里，需要有至少两个函数:`__init__`,`forward`
+
+模型最重要的是理解各个层的使用意义，以及保证每个层的输入输出维度合理
 
 ### 2.1 Network defination
 
@@ -390,6 +396,7 @@ class NeuralNetwork(nn.Module):
         self.flatten = nn.Flatten()
         #setting the neural network
         self.linear_relu_stack = nn.Sequential(
+            #且要注意，sequential内部各个layer之间需要,隔开
             #input layer, first size = h*w(for one channel)
             nn.Linear(28*28, 512),
             nn.ReLU(),
@@ -406,8 +413,20 @@ class NeuralNetwork(nn.Module):
 ```
 Forward function, according to the offcial website of torch[URL](https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html), it's highly suggested not to dierctly call `model. forward()`, and every subclass in `nn.Module` implements the operations on input data in the forward method
 
-
+打印模型
 ```python
 model = NeuralNetwork().to(device)
 print(model)
+```
+```
+NeuralNetwork(
+  (flatten): Flatten(start_dim=1, end_dim=-1)
+  (linear_relu_stack): Sequential(
+    (0): Linear(in_features=784, out_features=512, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=512, out_features=512, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=512, out_features=10, bias=True)
+  )
+)
 ```
