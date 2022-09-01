@@ -374,7 +374,68 @@ for a in loader:
 [tensor(\[[1, 1],[2, 2]]), tensor([9, 8])]
 [tensor(\[[3, 3],[4, 4]]), tensor([7, 6])]
 
-## 2. Model defination
+## 2. Transform
+
+具体超参数可查[URL](https://pytorch.org/vision/stable/transforms.html)
+
+transform其实就是在学CG时候学到的对图像的处理，例如scale(缩放)，reflection(对称)，shear(切变)，rotation(旋转)等，当然，torch中transform提供的功能更多。
+而由于其实tensor也可以看做图像信息(或者说图像信息，例如灰度，本身可以用tensor表征，所以torch中，不区分区别)
+
+补充说明：文档中提到的PIL(Python Imaging Library)，推测应该只是一种图像信息的表达形式，有的torch函数专用于处理该数据类型
+
+### 2.1 Normalize
+
+#### 2.1.1 说明
+`torchvision.transforms.Normalize(mean, std, inplace=False)`
+即对原始数据进行标准差归一化(见下方公式)，将数据转换为标准的高斯分布，原始数据均值为和标准差），其是逐个channel进行的，好处在于可以加速收敛，提高模型表现
+其中`mean`,`std`分别指定对各个channel进行标准化的均值和方差，有几个channel，就是几维的
+
+$x^*=\frac{x-mean}{std}$
+
+#### 2.1.2 Case
+
+数据准备
+```python
+aa=torch.ones(2,2,3)
+aa[:,:,1:2]+=1
+aa[:,:,2:3]+=2
+aa[1,0,:]+=1
+aa[0,1,:]*=2
+aa[1,1,:]+=3
+# tensor([[[1., 2., 3.],
+#          [2., 4., 6.]],
+#         [[2., 3., 4.],
+#          [4., 5., 6.]]])
+```
+
+以下两种实现均可
+```python
+transform1=torch.nn.Sequential(
+    transforms.Normalize((0, 0.5), (1, 0.5))
+)
+
+transform2 = transforms.Compose(
+#     [transforms.ToTensor(),
+     [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+```
+```python
+b=transform1(aa)#维度吻合，成功输出
+# tensor([[[ 1.,  2.,  3.],
+#          [ 2.,  4.,  6.]],
+#         [[ 3.,  5.,  7.],
+#          [ 7.,  9., 11.]]])
+b=transform2(aa)#维度不吻合，报错
+# The size of tensor a (2) must match the size of tensor b (3) at non-singleton dimension 0
+```
+先分析数据：
+transform1中(0, 0.5), (1, 0.5)，第一个0(mean)和第二个1(std)是一组，代表对aa[0](即\[[1., 2., 3.],[2., 4., 6.]])进行处理，而由公式可知，此时$x^*=x$，故输出结果与aa[0]保持一致
+
+transform1中(0, 0.5), (1, 0.5)，第一个0.5(mean)和第二个0.5(std)是一组，代表对aa[1](即\[[2., 3., 4.],[4., 5., 6.]])进行处理，而由公式可知，此时$x^*=\frac{x-0.5}{0.5}$，故输出结果如上所示
+
+同时应当注意的是，维度的问题
+
+
+## 3. Model defination
 
 具体超参数可查[URL](https://pytorch.org/docs/stable/nn.html)
 
@@ -384,7 +445,7 @@ for a in loader:
 
 模型最重要的是理解各个层的使用意义，以及保证每个层的输入输出维度合理
 
-### 2.1 Network defination
+### 3.1 Network defination
 
 ```python 
 # Define model
