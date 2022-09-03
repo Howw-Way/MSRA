@@ -491,3 +491,58 @@ NeuralNetwork(
   )
 )
 ```
+
+## 4. Optimizer
+
+### 4.1 Scheduler
+
+scheduler是用来调整learning rate，通常开始时选用较大的学习率，而后期随着学习的进行，逐渐减小学习率，以找到最优解，所在位置通常是完成一次训练之后，准备在测试集上测试之前，例如
+
+```python
+for ep in range(epochs):
+    model.train()
+    t1 = default_timer()
+    train_l2 = 0
+    for x, y in train_loader:
+        x, y = x.cuda(), y.cuda()
+
+        optimizer.zero_grad()
+        out = model(x).reshape(batch_size, s, s)
+        out = y_normalizer.decode(out)
+        y = y_normalizer.decode(y)
+
+        loss = myloss(out.view(batch_size,-1), y.view(batch_size,-1))
+        loss.backward()
+
+        optimizer.step()
+        train_l2 += loss.item()
+#z之前的均为训练
+    scheduler.step()
+#准备进行测试
+    model.eval()
+```
+
+本小节笔记来源：
+1. 官网[URL](https://pytorch.org/docs/stable/optim.html)
+
+2. 知乎文章[URL](https://zhuanlan.zhihu.com/p/69411064)
+
+#### 4.1.1 StepLR
+
+##### 4.1.1.1 参考资料：
+
+官网[URL](https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html?highlight=steplr#torch.optim.lr_scheduler.StepLR)
+
+##### 4.1.1.2 说明
+
+该函数等间隔调整学习率，调整倍数为gamma整数倍，调整间隔为step_size。间隔单位是step（step通常是指epoch）
+
+`torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma=0.1, last_epoch=- 1, verbose=False)`
+
+`optimizer`：指定optimizer，故通常先指定optimizer再指定scheduler
+
+`step_size(int)`: 指定经过多少epoch才改变一次learning_rate
+
+`gamma(float)`: 每次调整学习率的倍数，调整后的学习率=之前的*gamma
+
+`last_epoch(int)`： 即之前的学习率来自哪一个epoco
