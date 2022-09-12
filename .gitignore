@@ -1,0 +1,6 @@
+/data
+/Torch101/data
+data/
+/Torch101/data/
+*.tar
+*.gz
