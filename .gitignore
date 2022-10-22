@@ -4,3 +4,5 @@ data/
 /Torch101/data/
 *.tar
 *.gz
+/DNS
+/DNS/
